@@ -1,0 +1,12 @@
+aiosqlite==0.16.1
+click==7.1.2
+fastapi==0.63.0
+h11==0.12.0
+iso8601==0.1.14
+pydantic==1.8.1
+pypika-tortoise==0.1.0
+pytz==2020.5
+starlette==0.13.6
+tortoise-orm==0.17.2
+typing-extensions==3.7.4.3
+uvicorn==0.13.4
