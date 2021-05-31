@@ -1,5 +1,5 @@
 from fastapi import (FastAPI, BackgroundTasks, UploadFile, 
-                    File, Form, Depends, HTTPException, status)
+                    File, Form, Depends, HTTPException, status, Request)
 from tortoise.contrib.fastapi import register_tortoise
 from models import (User, Business, Product, user_pydantic, user_pydanticIn, 
                     product_pydantic,product_pydanticIn, business_pydantic, 
@@ -35,6 +35,9 @@ from fastapi.staticfiles import StaticFiles
 
 # pillow
 from PIL import Image
+
+# templates
+from fastapi.templating import Jinja2Templates
 
 config_credentials = dict(dotenv_values(".env"))
 
@@ -87,14 +90,18 @@ async def user_registration(user: user_pydanticIn):
 
 
 
-# this route is for the swagger UI
-@app.post('/verification')
-async def email_verification(token: str):
+# template for email verification
+templates = Jinja2Templates(directory="templates")
+
+@app.get('/verification')
+# make sure to import request from fastapi
+async def email_verification(token: str, request: Request):
     user = await verify_token(token)
     if user and not user.is_verified:
         user.is_verified = True
         await user.save()
-        return {"username" : user.is_verified}
+        return templates.TemplateResponse("verification.html", 
+                                {"username": user.username, "request": request})
     raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED, 
             detail = "Invalid or expired token",
@@ -148,8 +155,9 @@ async def add_new_product(product: product_pydanticIn,
 
 @app.get("/products")
 async def get_products():
-    response = await product_pydantic.from_queryset(Product.all())
+    response = await product_pydantic.from_tortoise_orm(Product.all())
     return {"status" : "ok", "data" : response}
+
 
 @app.get("/products/{id}")
 async def specific_product(id: int):
@@ -157,6 +165,7 @@ async def specific_product(id: int):
     business = await product.business
     owner = await business.owner
     response = await product_pydantic.from_queryset_single(Product.get(id = id))
+    print(type(response))
     return {"status" : "ok",
             "data" : 
                     {
@@ -217,10 +226,23 @@ async def create_upload_file(file: UploadFile = File(...),
     file.close()
 
     business = await Business.get(owner = user)
-    business.logo = token_name
-    await business.save()
+    owner = await business.owner
 
-    return {"status": "ok", "filename": generated_name}
+ # check if the user making the request is authenticated
+    print(user.id)
+    print(owner.id)
+    if owner == user:
+        business.logo = token_name
+        await business.save()
+    
+    else:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED, 
+            detail = "Not authenticated to perform this action",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    file_url = "localhost:8000" + generated_name[1:]
+    return {"status": "ok", "filename": file_url}
 
 
 @app.post("/uploadfile/product/{id}")
@@ -248,11 +270,28 @@ async def create_upload_file(id: int, file: UploadFile = File(...),
 
     file.close()
 
+    #get product details
     product = await Product.get(id = id)
-    priduct.product_image = token_name
-    await product.save()
+    business = await product.business
+    owner = await business.owner
 
-    return {"status": "ok", "filename": generated_name}
+    # check if the user making the request is authenticated
+    if owner == user:
+        product.product_image = token_name
+        await product.save()
+    
+    else:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED, 
+            detail = "Not authenticated to perform this action",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+    file_url = "localhost:8000" + generated_name[1:]
+    return {"status": "ok", "filename": file_url}
+
+
 
 
 register_tortoise(

@@ -20,10 +20,10 @@ class User(Model):
 class Business(Model):
     id = fields.IntField(pk = True, index = True)
     business_name = fields.CharField(max_length = 20, nullable = False, unique = True)
-    city = fields.CharField(max_length = 100, null = False, default = "Dar es salaam")
-    region = fields.CharField(max_length = 100, null = False, default = "Dar es salaam")
+    city = fields.CharField(max_length = 100, null = False, default = "Unspecified")
+    region = fields.CharField(max_length = 100, null = False, default = "Unspecified")
     business_description = fields.TextField(null = True)
-    logo = fields.CharField(max_length =200, null = False, default = "./static/images/default.jpg")
+    logo = fields.CharField(max_length =200, null = False, default = "default.jpg")
     owner = fields.ForeignKeyField('models.User', related_name='business')    
 
 
@@ -36,7 +36,7 @@ class Product(Model):
     new_price = fields.DecimalField(max_digits = 12, decimal_places = 2)
     percentage_discount = fields.IntField()
     offer_expiration_date = fields.DateField(default = datetime.utcnow)
-    product_image = fields.CharField(max_length =200, null = False, default = "./static/images/productDefault.jpg")
+    product_image = fields.CharField(max_length =200, null = False, default = "productDefault.jpg")
     date_published = fields.DatetimeField(default = datetime.utcnow)
     # the value for percentage_discount will be computed and 
     # added using storing user input in the routes
