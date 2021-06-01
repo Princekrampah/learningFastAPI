@@ -39,6 +39,9 @@ from PIL import Image
 # templates
 from fastapi.templating import Jinja2Templates
 
+# HTMLResponse
+from fastapi.responses import HTMLResponse
+
 config_credentials = dict(dotenv_values(".env"))
 
 
@@ -86,22 +89,23 @@ async def user_registration(user: user_pydanticIn):
  
     return {"status" : "ok", 
             "data" : 
-                f"Hello {new_user.username} thanks for choosing our services, you can now login to your account"}
+                f"Hello {new_user.username} thanks for choosing our services. Please check your email inbox and click on the link to confirm your registration."}
 
 
 
 # template for email verification
 templates = Jinja2Templates(directory="templates")
 
-@app.get('/verification')
-# make sure to import request from fastapi
-async def email_verification(token: str, request: Request):
+@app.get('/verification',  response_class=HTMLResponse)
+# make sure to import request from fastapi and HTMLResponse
+async def email_verification(request: Request, token: str):
     user = await verify_token(token)
     if user and not user.is_verified:
         user.is_verified = True
         await user.save()
         return templates.TemplateResponse("verification.html", 
-                                {"username": user.username, "request": request})
+                                {"request": request, "username": user.username}
+                        )
     raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED, 
             detail = "Invalid or expired token",
