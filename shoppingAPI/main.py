@@ -6,7 +6,7 @@ from models import (User, Business, Product, user_pydantic, user_pydanticIn,
                     business_pydanticIn, user_pydanticOut)
 
 # signals
-from tortoise.signals import post_delete, post_save, pre_delete, pre_save
+from tortoise.signals import  post_save 
 from typing import List, Optional, Type
 from tortoise import BaseDBAsyncClient
 
@@ -62,7 +62,6 @@ async def generate_token(request_form: OAuth2PasswordRequestForm = Depends()):
 
 
 
-
 # process signals here
 @post_save(User)
 async def create_business(
@@ -111,6 +110,7 @@ async def email_verification(request: Request, token: str):
             detail = "Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
 
 async def get_current_user(token: str = Depends(oath2_scheme)):
     try:

@@ -1,4 +1,4 @@
-from fastapi import (FastAPI, BackgroundTasks, UploadFile, 
+from fastapi import (BackgroundTasks, UploadFile, 
                     File, Form, Depends, HTTPException, status)
 
 from dotenv import dotenv_values
